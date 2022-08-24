@@ -1,6 +1,5 @@
 import os
 import cv2
-import numpy as np
 import gc
 import sys
 import curses
@@ -67,6 +66,7 @@ frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 frameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+
 cmd = f'mode {frameWidth + 1}, {frameHeight + 1}'
 os.system(cmd)
 
@@ -78,9 +78,7 @@ videoHeight = frameHeight // 2
 
 def generate_ascii():
     global fps
-    buf = np.empty((frameCount, frameHeight, frameWidth, 3), np.dtype('uint8'))
     fc = 0
-    ret = True
     out = ''
     gscale = ".:-=+*#%@"
     temp = open("source.txt", "w")
@@ -113,7 +111,7 @@ def generate_ascii():
     cv2.destroyAllWindows()
 
 
-generate_ascii()
+# generate_ascii()
 
 stdscr = curses.initscr()
 stdscr.scrollok(True)
