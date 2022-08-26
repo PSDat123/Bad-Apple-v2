@@ -56,9 +56,9 @@ font.cbSize = sizeof(CONSOLE_FONT_INFOEX)
 res = get_current_console_font_ex_func(stdout, False, byref(font))
 font.dwFontSize.X = 10  # Changing X has no effect (at least on my machine)
 font.dwFontSize.Y = 11
+font.FaceName = "Lucida Console"
 # Apply changes
 res = set_current_console_font_ex_func(stdout, False, byref(font))
-res = get_current_console_font_ex_func(stdout, False, byref(font))
 
 if not os.path.isdir("./data"):
     os.makedirs("./data")
