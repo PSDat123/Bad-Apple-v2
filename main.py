@@ -60,20 +60,19 @@ font.dwFontSize.Y = 11
 res = set_current_console_font_ex_func(stdout, False, byref(font))
 res = get_current_console_font_ex_func(stdout, False, byref(font))
 
-
-cap = cv2.VideoCapture('Bad Apple_144p.mp4')
+if not os.path.isdir("./data"):
+    os.makedirs("./data")
+if not os.path.isfile("./data/video.mp4"):
+    exit()
+cap = cv2.VideoCapture('./data/video.mp4')
 frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 frameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
+fps = int(cap.get(5))
+videoHeight = frameHeight // 2
 
 cmd = f'mode {frameWidth + 1}, {frameHeight + 1}'
 os.system(cmd)
-
-fps = 30
-ms = 1 / fps
-status = 0
-videoHeight = frameHeight // 2
 
 
 def generate_ascii():
@@ -81,15 +80,14 @@ def generate_ascii():
     fc = 0
     out = ''
     gscale = ".:-=+*#%@"
-    temp = open("source.txt", "w")
+    temp = open("./data/source.txt", "w")
     while cap.isOpened():
         ret, buf = cap.read()
         if not ret:
             break
         cv2.imshow('image', buf)
-        k = cv2.waitKey(5)
+        k = cv2.waitKey(1)
         fc += 1
-        os.system('cls')
 
         for i in range(videoHeight):
             for j in range(int(frameWidth)):
@@ -98,63 +96,66 @@ def generate_ascii():
                 B = buf[i * 2][j][2]
                 gray = 0.2126 * R + 0.7152 * G + 0.0722 * B
                 out += gscale[int(gray // 30)]
-
             out += "\n"
+
         temp.write(out)
         temp.write("\n")
         out = ''
         if k & 0xff == ord('q'):
             break
-    temp.close()
 
+    temp.close()
     cap.release()
     cv2.destroyAllWindows()
 
 
-# generate_ascii()
+if not os.path.isfile("./data/source.txt"):
+    generate_ascii()
 
-stdscr = curses.initscr()
-stdscr.scrollok(True)
-stdscr.timeout(1)
-curses.curs_set(0)
-curses.noecho()
-curses.cbreak()
-stdscr.keypad(True)
+def play_video():
+    stdscr = curses.initscr()
+    stdscr.scrollok(True)
+    stdscr.timeout(1)
+    curses.curs_set(0)
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(True)
 
-def play_music():
-    playsound('./Bad Apple.mp3')
+    def play_music():
+        playsound('./data/sound.mp3')
 
+    music_thread = Thread(target=play_music)
+    music_thread.start()
+    t0 = time.time()
+    frame = 1
+    with open("./data/source.txt", 'r') as f:
+        while True:
+            t1 = time.time()
+            new_frame = int((t1 - t0) * fps) + 1
+            if new_frame == frame:
+                continue
+            frame = new_frame
 
-music_thread = Thread(target=play_music)
-music_thread.start()
-t0 = time.time()
-frame = 1
-with open("source.txt", 'r') as f:
-    while True:
-        t1 = time.time()
-        new_frame = int((t1 - t0) * fps) + 1
-        if new_frame == frame:
-            continue
-        frame = new_frame
+            try:
+                data = ""
+                for i in range(videoHeight):
+                    data += f.readline()
+                f.readline()
+                stdscr.addstr(0, 0, data)
+                # stdscr.addstr("Frame: %d" % i)
+                stdscr.clrtoeol()
+                stdscr.clearok(1)
+                stdscr.refresh()
+            except IOError:
+                break
 
-        try:
-            data = ""
-            for i in range(videoHeight):
-                data += f.readline()
-            f.readline()
-            stdscr.addstr(0, 0, data)
-            # stdscr.addstr("Frame: %d" % i)
-            stdscr.clrtoeol()
-            stdscr.clearok(1)
-            stdscr.refresh()
-        except IOError:
-            break
+    curses.curs_set(1)
+    curses.echo()
+    curses.nocbreak()
+    stdscr.keypad(False)
 
-curses.curs_set(1)
-curses.echo()
-curses.nocbreak()
-stdscr.keypad(False)
+    curses.endwin()
+    gc.collect()
+    sys.exit()
 
-curses.endwin()
-gc.collect()
-sys.exit()
+play_video()
